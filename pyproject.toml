@@ -1,0 +1,91 @@
+[build-system]
+requires = [
+    "setuptools>=61.0.0",
+    "hatchling>=1.3.1",
+    "jupyterlab==4.*",
+]
+build-backend = "hatchling.build"
+
+[project]
+name = "jupyter_notepad"
+description = ""
+license = {file = "LICENSE.txt"}
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    { name = "Cam Feenstra", email = "me@camfeenstra.com" },
+]
+version = "0.0.1.dev0"
+
+keywords = [
+    "IPython",
+    "Jupyter",
+    "Widgets",
+]
+classifiers = [
+    "Framework :: Jupyter",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
+]
+dependencies = [
+    "ipywidgets>=7.0.0",
+    "GitPython>=3.0.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "bump2version==1.*",
+    "jupyterlab==4.*",
+    "build>=1.0.0",
+    "mypy>=1,<2",
+    "twine"
+]
+
+[project.urls]
+Homepage = "https://github.com/cfeenstra67/jupyter-notepad"
+
+[tool.hatch.build]
+artifacts = [
+    "jupyter_notepad/nbextension",
+    "jupyter_notepad/labextension",
+]
+
+[tool.hatch.build.targets.wheel.shared-data]
+"jupyter_notepad/labextension/jupyter-notepad" = "share/jupyter/labextensions/jupyter-notepad"
+"jupyter_notepad/nbextension/jupyter-notepad.js" = "share/jupyter/nbextensions/jupyter-notepad.js"
+"./install.json" = "share/jupyter/labextensions/jupyter-notepad/install.json"
+"./jupyter-notepad.json" = "etc/jupyter/nbconfig/notebook.d/jupyter-notepad.json"
+
+[tool.hatch.build.hooks.jupyter-builder]
+build-function = "hatch_jupyter_builder.npm_builder"
+ensured-targets = [
+    "jupyter_notepad/nbextension/jupyter-notepad.js",
+    "jupyter_notepad/labextension/jupyter-notepad/package.json",
+]
+skip-if-exists = [
+    "jupyter_notepad/nbextension/jupyter-notepad.js",
+    "jupyter_notepad/labextension/jupyter-notepad/package.json",
+]
+dependencies = [
+    "hatch-jupyter-builder>=0.5.0",
+]
+
+[tool.hatch.build.hooks.jupyter-builder.build-kwargs]
+path = "."
+build_cmd = "build:prod"
+npm = "pnpm"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.mypy]
+packages = ["jupyter_notepad"]
+disable_error_code = "import-untyped"

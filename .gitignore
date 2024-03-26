@@ -1,0 +1,12 @@
+/venv
+/lib
+/dist
+/node_modules
+/jupyter_notepad/nbextension
+/jupyter_notepad/labextension
+*.ipynb
+.ipynb_checkpoints
+*.pyc
+__pycache__
+/.mypy_cache
+/.ruff_cache
