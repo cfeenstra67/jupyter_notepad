@@ -3,6 +3,7 @@ import {
   type DependencyList,
   createContext,
   createElement,
+  useCallback,
   useContext,
   useEffect,
   useState,
@@ -27,6 +28,10 @@ export interface ModelContext<T> {
   useModelState: <K extends string & keyof T>(
     name: K,
   ) => [T[K], (val: T[K]) => void];
+  useModelChange: <K extends string & keyof T>(
+    name: K,
+    cb: (newValue: T[K]) => void,
+  ) => void;
   useTransport: () => (method: string, payload: unknown) => Promise<unknown>;
 }
 
@@ -54,6 +59,16 @@ export function createModelContext<T>(): ModelContext<T> {
     }, dependencies);
   };
 
+  const useModelChange: ModelContext<T>["useModelChange"] = (name, cb) => {
+    useModelEvent(
+      `change:${name}`,
+      (model) => {
+        cb(model.get(name));
+      },
+      [name],
+    );
+  };
+
   const useModelState: ModelContext<T>["useModelState"] = <
     K extends string & keyof T,
   >(
@@ -62,71 +77,71 @@ export function createModelContext<T>(): ModelContext<T> {
     const model = useModel();
     const [state, setState] = useState<T[K]>(model?.get(name));
 
-    useModelEvent(
-      `change:${name}`,
-      (model) => {
-        setState(model.get(name));
-      },
-      [name],
-    );
+    useModelChange(name, (newValue) => setState(newValue));
 
-    function updateModel(val: T[K], options?: unknown) {
-      model?.set(name, val, options);
-      model?.save_changes();
-    }
+    const updateModel = useCallback(
+      (val: T[K], options?: unknown) => {
+        model?.set(name, val, options);
+        model?.save_changes();
+      },
+      [name, model],
+    );
 
     return [state, updateModel];
   };
 
   const useTransport: ModelContext<T>["useTransport"] = () => {
     const model = useModel();
-    return async (method, payload) => {
-      if (!model) {
-        throw new Error("No transport connected");
-      }
-      const requestId = await new Promise<string>((resolve, reject) => {
-        const request = {
-          request_id: uuid.v4(),
-          method,
-          // biome-ignore lint/suspicious/noExplicitAny: easiest fix here
-          payload: payload as any,
-        };
+    return useCallback(
+      async (method, payload) => {
+        if (!model) {
+          throw new Error("No transport connected");
+        }
+        const requestId = await new Promise<string>((resolve, reject) => {
+          const request = {
+            request_id: uuid.v4(),
+            method,
+            // biome-ignore lint/suspicious/noExplicitAny: easiest fix here
+            payload: payload as any,
+          };
 
-        model.send(request, {
-          iopub: {
-            status: (msg) => {
-              resolve(request.request_id);
+          model.send(request, {
+            iopub: {
+              status: (msg) => {
+                resolve(request.request_id);
+              },
             },
-          },
+          });
+
+          setTimeout(() => reject(new Error("Request timed out")), 10000);
         });
+        return await new Promise<void>((resolve, reject) => {
+          const teardown = () => {
+            model.off("msg:custom", listener);
+          };
 
-        setTimeout(() => reject(new Error("Request timed out")), 10000);
-      });
-      return await new Promise<void>((resolve, reject) => {
-        const teardown = () => {
-          model.off("msg:custom", listener);
-        };
+          const listener = (payload) => {
+            if (payload?.request_id !== requestId) {
+              return;
+            }
+            teardown();
+            if (payload.success) {
+              resolve(payload.payload);
+            } else {
+              reject(new Error(payload.error));
+            }
+          };
 
-        const listener = (payload) => {
-          if (payload?.request_id !== requestId) {
-            return;
-          }
-          teardown();
-          if (payload.success) {
-            resolve(payload.payload);
-          } else {
-            reject(new Error(payload.error));
-          }
-        };
+          model.on("msg:custom", listener);
 
-        model.on("msg:custom", listener);
-
-        setTimeout(() => {
-          teardown();
-          reject(new Error("Request timed out"));
-        }, 10000);
-      });
-    };
+          setTimeout(() => {
+            teardown();
+            reject(new Error("Request timed out"));
+          }, 10000);
+        });
+      },
+      [model],
+    );
   };
 
   return {
@@ -136,5 +151,6 @@ export function createModelContext<T>(): ModelContext<T> {
     useModelEvent,
     useModelState,
     useTransport,
+    useModelChange,
   };
 }

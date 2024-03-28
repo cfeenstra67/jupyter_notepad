@@ -4,7 +4,7 @@ import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 import { useWidgetModelState } from "../lib/widget-model";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useCommitAction } from "../hooks/useCommitAction";
 import "../styles/globals.css";
 import { jupyterTheme } from "../theme";
@@ -15,7 +15,7 @@ export default function Widget() {
   const ref = useRef<HTMLDivElement>(null);
   const [code, setCode] = useWidgetModelState("code");
   const [height] = useWidgetModelState("height");
-  const [lineNumbers, setLineNumbers] = useState(false);
+  const [lineNumbers] = useWidgetModelState("show_line_numbers");
   const commit = useCommitAction();
 
   return (
@@ -24,7 +24,7 @@ export default function Widget() {
       className="flex flex-col border border-cellBorder"
       style={{ height: `${height}rem` }}
     >
-      <Toolbar lineNumbers={lineNumbers} setLineNumbers={setLineNumbers} />
+      <Toolbar />
       <CodeMirror
         value={code}
         className="overflow-y-scroll px-1"

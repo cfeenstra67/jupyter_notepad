@@ -53,3 +53,6 @@ pnpm check
 ```bash
 pnpm build:python
 ```
+
+
+- TODO: clean up JS dependencies

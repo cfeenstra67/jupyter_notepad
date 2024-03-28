@@ -1,12 +1,14 @@
 import contextlib
 import os
-from typing import Optional, Dict
+from typing import Optional, Dict, Generator, Any
 
 import git
 from blinker import signal
 
 
 commit_signal = signal("commit")
+
+checkout_signal = signal("checkout")
 
 
 class Repo:
@@ -19,6 +21,14 @@ class Repo:
         else:
             self.repo = git.Repo(path)
         self._files: Dict[str, File] = {}
+
+    def head(self) -> Optional[str]:
+        """ """
+        try:
+            return self.repo.head.commit.hexsha
+        # This indicates it's the first commit
+        except ValueError:
+            return None
 
     @contextlib.contextmanager
     def open(self, path: str, mode: str = "r", **kwargs):
@@ -58,7 +68,7 @@ class Repo:
 
         commit = self.repo.index.commit(f"{path}: {message}")
 
-        commit_signal.send(self, path=path, hash=commit.hexsha)
+        commit_signal.send(self, path=path, hexsha=commit.hexsha)
 
         return commit.hexsha
 
@@ -75,6 +85,8 @@ class Repo:
         self.repo.head.reference = branch_obj  # type: ignore
         self.repo.head.reset(index=True, working_tree=True)
 
+        checkout_signal.send(self, branch=branch)
+
     def file(self, path: str, **kwargs) -> "File":
         """ """
         full_path = os.path.join(self.path, path)
@@ -84,6 +96,15 @@ class Repo:
         if path not in self._files:
             self._files[path] = File(self, path, **kwargs)
         return self._files[path]
+
+    def iter_commits(self, path: str) -> Generator[Dict[str, Any], None, None]:
+        for commit in self.repo.iter_commits(paths=[path]):
+            ts_millis = int(commit.committed_datetime.timestamp() * 1000)
+            yield {
+                "hexsha": commit.hexsha,
+                "message": commit.message,
+                "timestamp_millis": ts_millis,
+            }
 
     def get_blob(self, ref: str, path: str) -> Optional[bytes]:
         commit = self.repo.commit(ref)

@@ -6,11 +6,15 @@ export interface IWidgetModel {
   code: string;
   height: number;
   is_dirty: boolean;
+  show_line_numbers: boolean;
+  head_commit: string | null;
+  checkout_commit: string | null;
 }
 
 export const {
   Provider: WidgetViewProvider,
   useModel: useWidgetModel,
+  useModelChange: useWidgetModelChange,
   useModelEvent: useWidgetModelEvent,
   useModelState: useWidgetModelState,
   useTransport: useWidgetTransport,
@@ -20,6 +24,9 @@ const defaultModelProperties: IWidgetModel = {
   code: "",
   height: 4,
   is_dirty: false,
+  show_line_numbers: false,
+  head_commit: null,
+  checkout_commit: null,
 };
 
 export class WidgetModel extends DOMWidgetModel {

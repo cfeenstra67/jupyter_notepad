@@ -14,6 +14,9 @@ export default {
       },
       font1: {
         DEFAULT: 'var(--jp-content-font-color1, rgba(255, 255, 255, 1))'
+      },
+      font3: {
+        DEFAULT: 'var(--jp-content-font-color3, rgba(255, 255, 255, 0.5))'
       }
     },
     extend: {},
