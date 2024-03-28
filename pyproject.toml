@@ -36,7 +36,9 @@ classifiers = [
 ]
 dependencies = [
     "ipywidgets>=7.0.0",
-    "GitPython>=3.0.0"
+    "GitPython>=3.0.0",
+    "aiohttp>=3.0.0",
+    "blinker>=1.0.0"
 ]
 
 [project.optional-dependencies]

@@ -1,26 +1,54 @@
-import CodeMirror from '@uiw/react-codemirror';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { EditorView } from '@codemirror/view';
-import { languages } from '@codemirror/language-data';
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { languages } from "@codemirror/language-data";
+import { EditorView } from "@codemirror/view";
+import CodeMirror from "@uiw/react-codemirror";
 import { useWidgetModelState } from "../lib/widget-model";
 
+import { useRef, useState } from "react";
+import { useCommitAction } from "../hooks/useCommitAction";
 import "../styles/globals.css";
-import { jupyterTheme } from '../theme';
+import { jupyterTheme } from "../theme";
+import { focusNextCell } from "../utils/focusNextCell";
+import Toolbar from "./Toolbar";
 
 export default function Widget() {
+  const ref = useRef<HTMLDivElement>(null);
   const [code, setCode] = useWidgetModelState("code");
-  const [height] = useWidgetModelState('height');
+  const [height] = useWidgetModelState("height");
+  const [lineNumbers, setLineNumbers] = useState(false);
+  const commit = useCommitAction();
 
   return (
-    <CodeMirror
-      value={code}
-      height={`${height * 3}rem`}
-      onChange={(code) => setCode(code)}
-      theme={jupyterTheme}
-      extensions={[markdown({ base: markdownLanguage, codeLanguages: languages }), EditorView.lineWrapping]}
-      basicSetup={{
-        lineNumbers: false
-      }}
-    />
+    <div
+      ref={ref}
+      className="flex flex-col border border-cellBorder"
+      style={{ height: `${height}rem` }}
+    >
+      <Toolbar lineNumbers={lineNumbers} setLineNumbers={setLineNumbers} />
+      <CodeMirror
+        value={code}
+        className="overflow-y-scroll px-1"
+        onChange={(code) => setCode(code)}
+        onKeyDown={async (event) => {
+          if (event.key === "Enter" && (event.shiftKey || event.metaKey)) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (ref.current !== null) {
+              focusNextCell(ref.current);
+            }
+          }
+
+          if (event.key === "s" && event.metaKey) {
+            await commit();
+          }
+        }}
+        theme={jupyterTheme}
+        extensions={[
+          markdown({ base: markdownLanguage, codeLanguages: languages }),
+          EditorView.lineWrapping,
+        ]}
+        basicSetup={{ lineNumbers }}
+      />
+    </div>
   );
 }

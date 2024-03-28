@@ -5,6 +5,7 @@ import { MODULE_NAME, MODULE_VERSION } from "../version";
 export interface IWidgetModel {
   code: string;
   height: number;
+  is_dirty: boolean;
 }
 
 export const {
@@ -12,11 +13,13 @@ export const {
   useModel: useWidgetModel,
   useModelEvent: useWidgetModelEvent,
   useModelState: useWidgetModelState,
+  useTransport: useWidgetTransport,
 } = createModelContext<IWidgetModel>();
 
 const defaultModelProperties: IWidgetModel = {
   code: "",
   height: 4,
+  is_dirty: false,
 };
 
 export class WidgetModel extends DOMWidgetModel {

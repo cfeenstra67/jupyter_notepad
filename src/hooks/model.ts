@@ -7,6 +7,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import * as uuid from "uuid";
 
 type ModelCallback = (models: WidgetModel, event: unknown) => void;
 
@@ -26,6 +27,7 @@ export interface ModelContext<T> {
   useModelState: <K extends string & keyof T>(
     name: K,
   ) => [T[K], (val: T[K]) => void];
+  useTransport: () => (method: string, payload: unknown) => Promise<unknown>;
 }
 
 export function createModelContext<T>(): ModelContext<T> {
@@ -76,11 +78,63 @@ export function createModelContext<T>(): ModelContext<T> {
     return [state, updateModel];
   };
 
+  const useTransport: ModelContext<T>["useTransport"] = () => {
+    const model = useModel();
+    return async (method, payload) => {
+      if (!model) {
+        throw new Error("No transport connected");
+      }
+      const requestId = await new Promise<string>((resolve, reject) => {
+        const request = {
+          request_id: uuid.v4(),
+          method,
+          // biome-ignore lint/suspicious/noExplicitAny: easiest fix here
+          payload: payload as any,
+        };
+
+        model.send(request, {
+          iopub: {
+            status: (msg) => {
+              resolve(request.request_id);
+            },
+          },
+        });
+
+        setTimeout(() => reject(new Error("Request timed out")), 10000);
+      });
+      return await new Promise<void>((resolve, reject) => {
+        const teardown = () => {
+          model.off("msg:custom", listener);
+        };
+
+        const listener = (payload) => {
+          if (payload?.request_id !== requestId) {
+            return;
+          }
+          teardown();
+          if (payload.success) {
+            resolve(payload.payload);
+          } else {
+            reject(new Error(payload.error));
+          }
+        };
+
+        model.on("msg:custom", listener);
+
+        setTimeout(() => {
+          teardown();
+          reject(new Error("Request timed out"));
+        }, 10000);
+      });
+    };
+  };
+
   return {
     Provider: ({ model, children }) =>
       createElement(ctx.Provider, { value: model, children }),
     useModel,
     useModelEvent,
     useModelState,
+    useTransport,
   };
 }

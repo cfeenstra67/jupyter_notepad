@@ -45,9 +45,11 @@
     "@lezer/highlight": "^1.2.0",
     "@lumino/application": "^2.3.0",
     "@lumino/widgets": "^2.3.1",
+    "@tanstack/react-query": "^5.28.9",
     "@uiw/react-codemirror": "^4.21.25",
     "react": "^17",
-    "react-dom": "^17"
+    "react-dom": "^17",
+    "uuid": "^9.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.6.2",
@@ -59,6 +61,7 @@
     "@rollup/plugin-typescript": "^11.1.6",
     "@swc/core": "^1.4.8",
     "@types/react": "^17",
+    "@types/uuid": "^9.0.8",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "process": "^0.11.10",

@@ -17,6 +17,7 @@
     "resolveJsonModule": true,
     "rootDir": "src",
     "skipLibCheck": true,
+    "strict": true,
     "strictPropertyInitialization": false,
     "sourceMap": true,
     "jsx": "react-jsx",
