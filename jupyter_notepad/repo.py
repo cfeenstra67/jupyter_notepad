@@ -1,6 +1,6 @@
 import contextlib
 import os
-from typing import Optional, Dict, Generator, Any
+from typing import Optional, Dict, Generator, Any, List
 
 import git
 from blinker import signal
@@ -8,7 +8,9 @@ from blinker import signal
 
 commit_signal = signal("commit")
 
-checkout_signal = signal("checkout")
+pre_checkout_signal = signal("pre-checkout")
+
+post_checkout_signal = signal("post-checkout")
 
 
 class Repo:
@@ -23,16 +25,33 @@ class Repo:
         self._files: Dict[str, File] = {}
 
     def head(self) -> Optional[str]:
-        """ """
+        """
+        Get the commit hash for HEAD
+        """
         try:
             return self.repo.head.commit.hexsha
         # This indicates it's the first commit
         except ValueError:
             return None
 
+    def branch(self) -> str:
+        """
+        Get the name of the currently checkout out branch
+        """
+        return self.repo.head.reference.name
+
+    def branches(self) -> List[str]:
+        """
+        List the names of all branches in the repository
+        """
+        return [branch.name for branch in self.repo.branches]  # type: ignore[attr-defined]
+
     @contextlib.contextmanager
     def open(self, path: str, mode: str = "r", **kwargs):
-        """ """
+        """
+        Open a file within the repository; just like the global
+        open() but takes a path relative to the repository root
+        """
         full_path = os.path.join(self.path, path)
         with open(full_path, mode, **kwargs) as f:
             yield f
@@ -54,12 +73,7 @@ class Repo:
         if message is None:
             message = "update"
 
-        try:
-            self.repo.head.object
-            head_exists = True
-        # This indicates it's the first commit
-        except ValueError:
-            head_exists = False
+        head_exists = self.head() is not None
 
         self.repo.index.add([path])
 
@@ -74,6 +88,9 @@ class Repo:
 
     def checkout(self, branch: str, create: bool = False) -> None:
         """ """
+        if self.branch() == branch:
+            return
+
         existing = [b for b in self.repo.branches if b.name == branch]  # type: ignore
         if existing:
             branch_obj = existing[0]
@@ -82,10 +99,16 @@ class Repo:
         else:
             branch_obj = self.repo.create_head(branch)
 
+        pre_checkout_signal.send(self, branch=branch)
+
         self.repo.head.reference = branch_obj  # type: ignore
         self.repo.head.reset(index=True, working_tree=True)
 
-        checkout_signal.send(self, branch=branch)
+        post_checkout_signal.send(self, branch=branch)
+
+    def _normalize_path(self, path: str) -> str:
+        full_path = os.path.normpath(os.path.join(self.path, path))
+        return os.path.relpath(full_path, self.path)
 
     def file(self, path: str, **kwargs) -> "File":
         """ """
@@ -93,11 +116,16 @@ class Repo:
         if os.path.isdir(full_path):
             raise Exception(f"{full_path} is a directory")
 
+        path = self._normalize_path(path)
+
         if path not in self._files:
             self._files[path] = File(self, path, **kwargs)
         return self._files[path]
 
     def iter_commits(self, path: str) -> Generator[Dict[str, Any], None, None]:
+        if self.head() is None:
+            return
+
         for commit in self.repo.iter_commits(paths=[path]):
             ts_millis = int(commit.committed_datetime.timestamp() * 1000)
             yield {
@@ -107,7 +135,10 @@ class Repo:
             }
 
     def get_blob(self, ref: str, path: str) -> Optional[bytes]:
-        commit = self.repo.commit(ref)
+        try:
+            commit = self.repo.commit(ref)
+        except git.BadName:
+            return None
         try:
             blob = commit.tree / path
         except KeyError:

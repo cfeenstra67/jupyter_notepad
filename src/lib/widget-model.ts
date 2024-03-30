@@ -3,6 +3,7 @@ import { createModelContext } from "../hooks/model";
 import { MODULE_NAME, MODULE_VERSION } from "../version";
 
 export interface IWidgetModel {
+  path: string;
   code: string;
   height: number;
   is_dirty: boolean;
@@ -21,6 +22,7 @@ export const {
 } = createModelContext<IWidgetModel>();
 
 const defaultModelProperties: IWidgetModel = {
+  path: "",
   code: "",
   height: 4,
   is_dirty: false,

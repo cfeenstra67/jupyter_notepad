@@ -1,15 +1,18 @@
 import type { WidgetModel } from "@jupyter-widgets/base";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WidgetViewProvider } from "../lib/widget-model";
-
-const queryClient = new QueryClient();
 
 export interface ProvidersProps {
   model: WidgetModel;
+  queryClient: QueryClient;
   children?: React.ReactNode;
 }
 
-export default function Providers({ model, children }: ProvidersProps) {
+export default function Providers({
+  model,
+  queryClient,
+  children,
+}: ProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <WidgetViewProvider model={model}>{children}</WidgetViewProvider>

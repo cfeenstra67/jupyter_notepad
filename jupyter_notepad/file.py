@@ -1,11 +1,16 @@
 import hashlib
 
-from typing import Optional, Any
+from typing import Optional, Any, Dict, Generator
 
 from ipywidgets import DOMWidget
 from traitlets import Unicode, Int, Bool
 
-from jupyter_notepad.repo import Repo, commit_signal, checkout_signal
+from jupyter_notepad.repo import (
+    Repo,
+    commit_signal,
+    pre_checkout_signal,
+    post_checkout_signal,
+)
 
 
 MODULE_NAME = "jupyter-notepad"
@@ -16,7 +21,12 @@ DEFAULT_HEIGHT = 18
 
 
 class File(DOMWidget):
-    """ """
+    """
+    The `File` object is a jupyter widget that can be used for
+    editing a particular file in a Repo, and as you edit your
+    change history will be saved. It is intended in particular for
+    iterating on prompts used in AI models
+    """
 
     # Metadata needed for jupyter to find the widget
     _model_name = Unicode("WidgetModel").tag(sync=True)
@@ -28,7 +38,7 @@ class File(DOMWidget):
 
     path = Unicode("").tag(sync=True)
     code = Unicode("").tag(sync=True)
-    height = Int(DEFAULT_HEIGHT).tag(sync=True)
+    height = Int(DEFAULT_HEIGHT, help="Widget height in rem").tag(sync=True)
     show_line_numbers = Bool(False).tag(sync=True)
     code_sha1 = Unicode("")
     head_sha1 = Unicode(None, allow_none=True)
@@ -44,6 +54,9 @@ class File(DOMWidget):
         self._unobserve = self._setup_listeners()
 
     def reload(self) -> None:
+        """
+        Reload the current code from the filesystem
+        """
         try:
             with self.repo.open(self.path) as f:
                 self.code = f.read()
@@ -62,6 +75,9 @@ class File(DOMWidget):
         )
 
     def commit(self) -> Optional[str]:
+        """
+        Commit the latest changes to the repository, if any
+        """
         hexsha = self.repo.commit(self.path)
         if hexsha is not None:
             self.checkout_sha1 = None
@@ -69,6 +85,12 @@ class File(DOMWidget):
         return hexsha
 
     def checkout(self, ref: str) -> None:
+        """
+        Check out the contents of the file from the given ref into
+        the current buffer. This will NOT actuallly check out that
+        ref on the repository level, it only does so for this specific
+        file.
+        """
         blob = self.repo.get_blob(ref, self.path)
         if blob is None:
             return
@@ -76,7 +98,16 @@ class File(DOMWidget):
         self.checkout_sha1 = self.code_sha1
         self.checkout_commit = ref
 
+    def iter_commits(self) -> Generator[Dict[str, Any], None, None]:
+        """
+        Iterate through commits of this file in the repository
+        """
+        yield from self.repo.iter_commits(self.path)
+
     def reset_height(self) -> None:
+        """
+        Reset this widget's height back to the default value (18rem)
+        """
         self.height = DEFAULT_HEIGHT
 
     def __str__(self) -> str:
@@ -151,8 +182,12 @@ class File(DOMWidget):
             else:
                 self.head_sha1 = hashlib.sha1(head_blob).hexdigest()
 
-        def observe_checkouts(repo, branch):
-            self.head_commit = self.repo.head()
+        def observe_pre_checkout(repo, branch):
+            if self.is_dirty:
+                self.commit()
+
+        def observe_post_checkout(repo, branch):
+            self.reload()
 
         def unobserve():
             self.unobserve(observe_code, ["code"])
@@ -160,13 +195,15 @@ class File(DOMWidget):
             self.unobserve(observe_checkout_sha1, ["checkout_sha1"])
             self.on_msg(observe_message, remove=True)
             commit_signal.disconnect(observe_commits, self.repo)
-            checkout_signal.disconnect(observe_checkouts, self.repo)
+            pre_checkout_signal.disconnect(observe_pre_checkout, self.repo)
+            post_checkout_signal.disconnect(observe_post_checkout, self.repo)
 
         self.observe(observe_code, ["code"])
         self.observe(observe_head_sha1, ["head_sha1"])
         self.observe(observe_checkout_sha1, ["checkout_sha1"])
         self.on_msg(observe_message)
         commit_signal.connect(observe_commits, self.repo)
-        checkout_signal.connect(observe_checkouts, self.repo)
+        pre_checkout_signal.connect(observe_pre_checkout, self.repo)
+        post_checkout_signal.connect(observe_post_checkout, self.repo)
 
         return unobserve
