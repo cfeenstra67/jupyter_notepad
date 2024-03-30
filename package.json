@@ -1,6 +1,6 @@
 {
   "name": "jupyter-notepad",
-  "version": "0.0.1-dev2",
+  "version": "0.0.1-dev3",
   "description": "",
   "type": "module",
   "main": "./dist/index.js",
