@@ -57,7 +57,7 @@ Homepage = "https://github.com/cfeenstra67/jupyter-notepad"
 [tool.hatch.build]
 artifacts = [
     "jupyter_notepad/nbextension",
-    "jupyter_notepad/labextension",
+    "jupyter_notepad/labextension"
 ]
 
 [tool.hatch.build.targets.wheel.shared-data]

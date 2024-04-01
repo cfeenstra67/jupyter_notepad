@@ -4,7 +4,6 @@ import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
 import postcss from 'rollup-plugin-postcss';
 import svg from 'rollup-plugin-svg';
-import { visualizer } from 'rollup-plugin-visualizer';
 
 function plugins({
   ts
@@ -25,7 +24,6 @@ function plugins({
     typescript(ts),
     json(),
     svg(),
-    visualizer(),
   ];
 }
 

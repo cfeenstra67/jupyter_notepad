@@ -8,3 +8,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - First basic version of the widget is working.
+
+- Correct syntax highlighting for any supported CodeMirror language, and code blocks within markdown

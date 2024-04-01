@@ -1,4 +1,5 @@
 import hashlib
+import os
 
 from typing import Optional, Any, Dict, Generator
 
@@ -19,6 +20,42 @@ MODULE_VERSION = "0.0.1-dev4"
 
 DEFAULT_HEIGHT = 18
 
+MISSING = object()
+
+
+def get_extension(path: str) -> str:
+    """
+    Get the extension for the current path, defaulting to ""
+    """
+    filename = os.path.basename(path)
+
+    parts = filename.rsplit(".", 1)
+
+    if len(parts) == 1:
+        return ""
+    
+    return parts[1]
+
+
+def file_is_dirty(file: "File", code: str = MISSING, code_sha1: str = MISSING, head_sha1: str = MISSING, checkout_sha1: str = MISSING) -> bool:
+    """
+    Compute the is_dirty property for a file, optionally using "non-current" attributes
+    for some values
+    """
+    if code is MISSING:
+        code = file.code
+    if code_sha1 is MISSING:
+        code_sha1 = file.code_sha1
+    if head_sha1 is MISSING:
+        head_sha1 = file.head_sha1
+    if checkout_sha1 is MISSING:
+        checkout_sha1 = file.checkout_sha1
+
+    if code == "" and head_sha1 is None:
+        return False
+
+    return code_sha1 != head_sha1 and code_sha1 != checkout_sha1
+
 
 class File(DOMWidget):
     """
@@ -37,6 +74,7 @@ class File(DOMWidget):
     _view_module_version = Unicode(MODULE_VERSION).tag(sync=True)
 
     path = Unicode("").tag(sync=True)
+    extension = Unicode("").tag(sync=True)
     code = Unicode("").tag(sync=True)
     height = Int(DEFAULT_HEIGHT, help="Widget height in rem").tag(sync=True)
     show_line_numbers = Bool(False).tag(sync=True)
@@ -48,7 +86,7 @@ class File(DOMWidget):
     checkout_commit = Unicode(None, allow_none=True).tag(sync=True)
 
     def __init__(self, repo: Repo, path: str, **kwargs) -> None:
-        super().__init__(path=path, **kwargs)
+        super().__init__(path=path, extension=get_extension(path), **kwargs)
         self.repo = repo
         self.reload()
         self._unobserve = self._setup_listeners()
@@ -70,9 +108,7 @@ class File(DOMWidget):
             self.head_sha1 = None
         else:
             self.head_sha1 = hashlib.sha1(head_blob).hexdigest()
-        self.is_dirty = (
-            self.code_sha1 != self.head_sha1 and self.code_sha1 != self.checkout_sha1
-        )
+        self.is_dirty = file_is_dirty(self)
 
     def commit(self) -> Optional[str]:
         """
@@ -133,25 +169,17 @@ class File(DOMWidget):
 
     def _setup_listeners(self):
         """ """
-
         def observe_code(change):
             with self.repo.open(self.path, "w+") as f:
                 f.write(change["new"])
                 self.code_sha1 = hashlib.sha1(change["new"].encode()).hexdigest()
-                self.is_dirty = (
-                    self.code_sha1 != self.head_sha1
-                    and self.code_sha1 != self.checkout_sha1
-                )
+                self.is_dirty = file_is_dirty(self, code=change["new"])
 
         def observe_head_sha1(change):
-            self.is_dirty = (
-                self.code_sha1 != change["new"] and self.code_sha1 != self.checkout_sha1
-            )
+            self.is_dirty = file_is_dirty(self, head_sha1=change["new"])
 
         def observe_checkout_sha1(change):
-            self.is_dirty = (
-                self.code_sha1 != self.head_sha1 and self.code_sha1 != change["new"]
-            )
+            self.is_dirty = file_is_dirty(self, checkout_sha1=change["new"])
 
         def observe_message(widget, content, buffers):
             try:

@@ -53,6 +53,11 @@ class Repo:
         open() but takes a path relative to the repository root
         """
         full_path = os.path.join(self.path, path)
+
+        dirname = os.path.dirname(full_path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+
         with open(full_path, mode, **kwargs) as f:
             yield f
 
@@ -86,7 +91,7 @@ class Repo:
 
         return commit.hexsha
 
-    def checkout(self, branch: str, create: bool = False) -> None:
+    def checkout(self, branch: str, create: bool = True) -> None:
         """ """
         if self.branch() == branch:
             return

@@ -4,6 +4,7 @@ import { MODULE_NAME, MODULE_VERSION } from "../version";
 
 export interface IWidgetModel {
   path: string;
+  extension: string;
   code: string;
   height: number;
   is_dirty: boolean;
@@ -23,6 +24,7 @@ export const {
 
 const defaultModelProperties: IWidgetModel = {
   path: "",
+  extension: "",
   code: "",
   height: 4,
   is_dirty: false,
