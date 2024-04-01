@@ -5,6 +5,10 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./lib/index.d.ts",
+  "files": [
+    "lib/**/*.{d.ts,js}",
+    "dist/*.js"
+  ],
   "scripts": {
     "build:python": "pnpm clean && venv/bin/python -m build .",
     "build:publish": "pnpm clean && pnpm build:prod",
