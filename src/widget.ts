@@ -8,7 +8,7 @@ import Widget from "./components/Widget";
 export class WidgetView extends DOMWidgetView {
   render() {
     const queryClient = new QueryClient();
-    this.el.classList.add('flex-grow');
+    this.el.classList.add("flex-grow");
 
     const component = createElement(
       Providers,
