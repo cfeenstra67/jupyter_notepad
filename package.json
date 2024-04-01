@@ -5,10 +5,25 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./lib/index.d.ts",
+  "homepage": "https://github.com/cfeenstra67/jupyter_notepad",
+  "bugs": {
+    "url": "https://github.com/cfeenstra67/jupyter_notepad/issues"
+  },
   "files": [
     "lib/**/*.{d.ts,js}",
     "dist/*.js"
   ],
+  "keywords": [
+    "jupyter",
+    "jupyterlab",
+    "jupyterlab-extension",
+    "widgets"
+  ],
+  "author": {
+    "name": "Cam Feenstra",
+    "email": "me@camfeenstra.com"
+  },
+  "license": "MIT",
   "scripts": {
     "build:python": "pnpm clean && venv/bin/python -m build .",
     "build:publish": "pnpm clean && pnpm build:prod",
@@ -34,9 +49,6 @@
     "pypi-upload": "twine upload dist/jupyter_notepad-*",
     "clean-all": "pnpm clean && rm -rf node_modules && rm -rf .ruff_cache && rm -rf .mypy_cache && rm -rf venv"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
     "@codemirror/lang-markdown": "^6.2.4",
     "@codemirror/language": "^6.10.1",
