@@ -16,7 +16,7 @@ from jupyter_notepad.repo import (
 
 MODULE_NAME = "jupyter-notepad"
 
-MODULE_VERSION = "0.0.2-dev3"
+MODULE_VERSION = "0.0.2"
 
 DEFAULT_HEIGHT = 18
 
