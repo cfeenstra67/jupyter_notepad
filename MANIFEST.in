@@ -4,9 +4,14 @@ include README.md
 include setup.py
 include pyproject.toml
 
+include install.json
+incldue jupyter-notepad.json
 include tsconfig.json
 include package.json
+include pnpm-lock.yaml
 include rollup.config.js
+include tailwind.config.js
+include postcss.config.cjs
 
 # Javascript files
 graft jupyter_notepad/labextension
@@ -22,3 +27,4 @@ global-exclude *.pyc
 global-exclude *.pyo
 global-exclude .git
 global-exclude .ipynb_checkpoints
+global-exclude __pycache__

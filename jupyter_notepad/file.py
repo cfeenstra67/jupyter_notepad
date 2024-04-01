@@ -16,7 +16,7 @@ from jupyter_notepad.repo import (
 
 MODULE_NAME = "jupyter-notepad"
 
-MODULE_VERSION = "0.0.1-dev4"
+MODULE_VERSION = "0.0.1-dev5"
 
 DEFAULT_HEIGHT = 18
 
@@ -33,11 +33,17 @@ def get_extension(path: str) -> str:
 
     if len(parts) == 1:
         return ""
-    
+
     return parts[1]
 
 
-def file_is_dirty(file: "File", code: str = MISSING, code_sha1: str = MISSING, head_sha1: str = MISSING, checkout_sha1: str = MISSING) -> bool:
+def file_is_dirty(
+    file: "File",
+    code: str = MISSING,  # type: ignore[assignment]
+    code_sha1: str = MISSING,  # type: ignore[assignment]
+    head_sha1: Optional[str] = MISSING,  # type: ignore[assignment]
+    checkout_sha1: Optional[str] = MISSING,  # type: ignore[assignment]
+) -> bool:
     """
     Compute the is_dirty property for a file, optionally using "non-current" attributes
     for some values
@@ -169,6 +175,7 @@ class File(DOMWidget):
 
     def _setup_listeners(self):
         """ """
+
         def observe_code(change):
             with self.repo.open(self.path, "w+") as f:
                 f.write(change["new"])

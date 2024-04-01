@@ -1,8 +1,8 @@
-import { useWidgetModelState } from "../lib/widget-model";
 import { useRef } from "react";
-import Toolbar from "./Toolbar";
-import Editor from "./Editor";
+import { useWidgetModelState } from "../lib/widget-model";
 import "../styles/globals.css";
+import Editor from "./Editor";
+import Toolbar from "./Toolbar";
 
 export default function Widget() {
   const ref = useRef<HTMLDivElement>(null);

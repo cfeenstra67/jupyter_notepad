@@ -1,24 +1,29 @@
-import clsx from 'clsx';
-import type { RefObject } from 'react';
-import ReactCodeMirror, { EditorView, type Extension } from "@uiw/react-codemirror";
-import { useWidgetModelState } from '../lib/widget-model';
+import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
+import { languages } from "@codemirror/language-data";
+import { useQuery } from "@tanstack/react-query";
+import ReactCodeMirror, {
+  EditorView,
+  type Extension,
+} from "@uiw/react-codemirror";
+import clsx from "clsx";
+import type { RefObject } from "react";
+import { useCommitAction } from "../hooks/useCommitAction";
+import { useWidgetModelState } from "../lib/widget-model";
+import { jupyterTheme } from "../theme";
 import { focusNextCell } from "../utils/focusNextCell";
-import { useCommitAction } from '../hooks/useCommitAction';
-import { jupyterTheme } from '../theme';
-import { languages } from '@codemirror/language-data';
-import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { useQuery } from '@tanstack/react-query';
 
 function useLanguageSupport(extension: string) {
   return useQuery({
-    queryKey: ['languageSupport', extension],
+    queryKey: ["languageSupport", extension],
     queryFn: async () => {
-      const language = languages.filter((lang) => lang.extensions.includes(extension))[0];
+      const language = languages.filter((lang) =>
+        lang.extensions.includes(extension),
+      )[0];
       if (!language) {
         return null;
       }
-      if (language.name === 'Markdown') {
-        return markdown({ base: markdownLanguage, codeLanguages: languages })
+      if (language.name === "Markdown") {
+        return markdown({ base: markdownLanguage, codeLanguages: languages });
       }
 
       if (language.support) {
@@ -40,9 +45,9 @@ export interface EditorProps {
 }
 
 export default function Editor({ className, parentRef }: EditorProps) {
-  const [extension] = useWidgetModelState('extension');
+  const [extension] = useWidgetModelState("extension");
   const [lineNumbers] = useWidgetModelState("show_line_numbers");
-  const [code, setCode] = useWidgetModelState('code');
+  const [code, setCode] = useWidgetModelState("code");
   const commit = useCommitAction();
 
   const extensions: Extension[] = [EditorView.lineWrapping];
