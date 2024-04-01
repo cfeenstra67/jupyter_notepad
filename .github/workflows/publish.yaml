@@ -81,4 +81,4 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: ./packages/python-client/dist/jupyter_notepad-*
+          files: ./dist/jupyter_notepad-*
