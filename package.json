@@ -1,6 +1,6 @@
 {
   "name": "jupyter-notepad",
-  "version": "0.0.2",
+  "version": "0.0.3-dev0",
   "description": "A versioned code editor widget for Jupyter",
   "type": "module",
   "main": "./dist/index.js",

@@ -15,7 +15,7 @@ requires-python = ">=3.7"
 authors = [
     { name = "Cam Feenstra", email = "me@camfeenstra.com" },
 ]
-version = "0.0.2"
+version = "0.0.3.dev0"
 
 keywords = [
     "IPython",
