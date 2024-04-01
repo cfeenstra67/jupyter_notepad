@@ -48,7 +48,7 @@ jobs:
       - name: Setup python cache
         uses: actions/cache@v3
         with:
-          path: ${{ steps.pip-cache.outputs.STORE_PATH }} ./packages/python-client/.tox
+          path: ${{ steps.pip-cache.outputs.STORE_PATH }}
           key: ${{ runner.os }}-python-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-python-
